@@ -220,35 +220,47 @@
         <h2 class="positive">❤️ プラス評価（スコアが上がる要因）</h2>
         <div class="explanation">
             AIが「このユーザーはこの投稿に対して以下のアクションを起こす確率が高い」と予測した場合、それぞれの確率に重み（ウェイト）が掛けられて総合スコアが加点されます。
+            <div class="formula-box">
+                予測スコア = (確率 × ウェイト) の総和<br>
+                例: 総合スコア = (いいね確率 × 0.5) + (リポスト確率 × 20.0) + (リプライ確率 × 27.0) + ...
+            </div>
+            ※ 具体的なウェイト数値はハードコードされておらず、<code>xai_feature_switches</code> を通じて外部から動的に読み込まれます（<a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L42-L66" target="_blank" style="color:var(--primary-color);">🔗ウェイト数値の取得元ソース</a>）。記載している数値は、過去の公開時に判明した目安となる設定値です。
         </div>
         <ul class="grid-list">
             <li class="card-item positive-item">
                 <strong>👍 いいね (Favorite) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L146" target="_blank" class="source-link">🔗ソース</a></strong>
                 <span class="desc">投稿に「いいね」を押す確率。アルゴリズムにおける最も基本的な強力なプラス評価です。</span>
+                <div class="badge-group"><span class="badge positive">ウェイト: 0.5倍</span></div>
             </li>
             <li class="card-item positive-item">
                 <strong>💬 返信 (Reply) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L147" target="_blank" class="source-link">🔗ソース</a></strong>
                 <span class="desc">投稿に対してリプライ（返信）を送る確率。会話を生む投稿として高く評価されます。</span>
+                <div class="badge-group"><span class="badge positive">ウェイト: 27.0倍</span><span class="badge positive">投稿者の返信あり: 75.0倍</span></div>
             </li>
             <li class="card-item positive-item">
                 <strong>🔁 リポスト (Retweet / Quote) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L148" target="_blank" class="source-link">🔗ソース</a></strong>
                 <span class="desc">リポストや引用リポストで拡散する確率。情報が広がる可能性として加点されます。</span>
+                <div class="badge-group"><span class="badge positive">ウェイト: 20.0倍</span></div>
             </li>
             <li class="card-item positive-item">
                 <strong>👤 プロフィールクリック <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L151" target="_blank" class="source-link">🔗ソース</a></strong>
                 <span class="desc">投稿者のプロフィールページへ遷移する確率。投稿者への興味の表れとみなされます。</span>
+                <div class="badge-group"><span class="badge positive">ウェイト: 12.0倍</span></div>
             </li>
             <li class="card-item positive-item">
                 <strong>➕ 投稿者のフォロー <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L165" target="_blank" class="source-link">🔗ソース</a></strong>
                 <span class="desc">その投稿を見たことがきっかけで、新しく投稿者をフォローする確率。非常に高い価値があります。</span>
+                <div class="badge-group"><span class="badge positive">ウェイト: 4.0倍 (推定)</span></div>
             </li>
             <li class="card-item positive-item">
                 <strong>👀 滞在時間 (Dwell) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L159" target="_blank" class="source-link">🔗ソース</a></strong>
                 <span class="desc">スクロールを止めてじっくりと投稿を読んだ時間、またはクリック後の継続的な滞在時間。</span>
+                <div class="badge-group"><span class="badge positive">ウェイト: 10.0倍 (推定)</span></div>
             </li>
             <li class="card-item positive-item">
                 <strong>🖼️ 画像拡大・動画視聴 <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L149" target="_blank" class="source-link">🔗ソース</a></strong>
                 <span class="desc">画像をタップして拡大する確率（Photo Expand）や、動画を一定時間視聴する確率（VQV）。</span>
+                <div class="badge-group"><span class="badge positive">動画視聴: 0.005倍</span></div>
             </li>
             <li class="card-item positive-item">
                 <strong>🔗 シェア (DM・リンク等) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L154" target="_blank" class="source-link">🔗ソース</a></strong>
@@ -264,28 +276,34 @@
     <div class="section">
         <h2 class="negative">📉 マイナス評価（スコアが下がる要因）</h2>
         <div class="explanation">
-            逆に、ユーザーが不快に感じたり、興味を持たないと予測される行動は、総合スコアから<strong>大きく減点</strong>されます。マイナス要因のウェイトは総じて重く設定されています。
+            逆に、ユーザーが不快に感じたり、興味を持たないと予測される行動は、総合スコアから<strong>大きく減点</strong>されます。マイナス要因のウェイトは総じて重く設定されています。<br>
+            ソースコード内の <code>offset_score</code> 関数にて、最終スコアがマイナスになった場合はペナルティのオフセット計算が行われます。
+            <div class="formula-box">
+                総合スコア &lt; 0 の場合:<br>
+                最終スコア = (総合スコア + ネガティブ総和) / 全ウェイト総和 * ペナルティオフセット
+            </div>
+            ※ マイナスのペナルティ数値も同様に動的に読み込まれます（<a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L83" target="_blank" style="color:var(--primary-color);">🔗ネガティブ総和の計算ソース</a>、<a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L175-L183" target="_blank" style="color:var(--primary-color);">🔗ペナルティオフセット関数のソース</a>）。
         </div>
         <ul class="grid-list">
             <li class="card-item negative-item">
                 <strong>🥱 興味なし (Not Interested) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L166" target="_blank" class="source-link">🔗ソース</a></strong>
                 <span class="desc">ユーザーが「この投稿に興味がない」メニューを押す確率。</span>
-                <div class="badge-group"><span class="badge negative">ペナルティ大</span></div>
+                <div class="badge-group"><span class="badge negative">ペナルティ大 (-74.0倍など)</span></div>
             </li>
             <li class="card-item negative-item">
                 <strong>🚫 ブロック (Block Author) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L167" target="_blank" class="source-link">🔗ソース</a></strong>
                 <span class="desc">投稿を見た直後に、その投稿者をブロックする確率。</span>
-                <div class="badge-group"><span class="badge negative">ペナルティ特大</span></div>
+                <div class="badge-group"><span class="badge negative">ペナルティ特大 (-74.0倍など)</span></div>
             </li>
             <li class="card-item negative-item">
                 <strong>🔇 ミュート (Mute Author) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L168" target="_blank" class="source-link">🔗ソース</a></strong>
                 <span class="desc">投稿を見た直後に、その投稿者をミュートする確率。</span>
-                <div class="badge-group"><span class="badge negative">ペナルティ特大</span></div>
+                <div class="badge-group"><span class="badge negative">ペナルティ特大 (-74.0倍など)</span></div>
             </li>
             <li class="card-item negative-item">
                 <strong>🚨 通報 (Report) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L169" target="_blank" class="source-link">🔗ソース</a></strong>
                 <span class="desc">スパムや違反行為として通報（レポート）される確率。</span>
-                <div class="badge-group"><span class="badge negative">ペナルティ特大</span></div>
+                <div class="badge-group"><span class="badge negative">ペナルティ特大 (-369.0倍など)</span></div>
             </li>
             <li class="card-item negative-item">
                 <strong>⏭️ 即スクロール (Not Dwelled) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L170" target="_blank" class="source-link">🔗ソース</a></strong>
@@ -304,7 +322,10 @@
             <li class="card-item">
                 <strong>👤 同一投稿者のペナルティ <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L186" target="_blank" class="source-link">🔗ソース</a></strong>
                 <span class="desc">タイムラインで同じ人の投稿ばかりが続くのを防ぐ機能です。同じ投稿者のツイートがフィードに複数回出現するたびに、乗数（減衰率）が掛けられ、徐々にスコアが低下します。</span>
-                <div class="formula-box">補正後スコア = スコア × (減衰率 ^ 表示順位)</div>
+                <div class="formula-box">
+                    diversity_multiplier = (1.0 - floor) * (decay_factor ^ position) + floor<br>
+                    最終スコア = 元スコア × diversity_multiplier
+                </div>
             </li>
             <li class="card-item">
                 <strong>🌐 フォロー外の補正 <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L220" target="_blank" class="source-link">🔗ソース</a></strong>
