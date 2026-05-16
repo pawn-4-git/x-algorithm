@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>X (旧Twitter) のおすすめアルゴリズム詳細解説</title>
+    <style>
+        :root {
+            --bg-color: #f7f9fa;
+            --text-color: #0f1419;
+            --card-bg: #ffffff;
+            --primary-color: #1d9bf0;
+            --positive-color: #00ba7c;
+            --negative-color: #f91880;
+            --warning-color: #ffd400;
+            --border-color: #eff3f4;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #1d9bf0 0%, #1a8cd8 100%);
+            color: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 32px;
+            margin-bottom: 15px;
+        }
+
+        header p {
+            font-size: 16px;
+            opacity: 0.95;
+            line-height: 1.5;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .section {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 35px;
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.06);
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        h2.positive { color: var(--positive-color); border-bottom-color: rgba(0, 186, 124, 0.2); }
+        h2.negative { color: var(--negative-color); border-bottom-color: rgba(249, 24, 128, 0.2); }
+        h2.limit { color: var(--warning-color); border-bottom-color: rgba(255, 212, 0, 0.3); }
+        h2.exclude { color: var(--text-color); border-bottom-color: var(--border-color); }
+
+        .grid-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 20px;
+            list-style: none;
+        }
+
+        .card-item {
+            background-color: #fcfcfc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .card-item strong {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+        }
+
+        .card-item.positive-item strong { color: #008f5d; }
+        .card-item.negative-item strong { color: #d1005f; }
+        
+        .desc {
+            font-size: 14px;
+            color: #536471;
+        }
+
+        .badge-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 5px;
+        }
+
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 12px;
+            white-space: nowrap;
+        }
+
+        .badge.primary { background-color: #e7f5fd; color: var(--primary-color); }
+        .badge.positive { background-color: #e6f8f2; color: var(--positive-color); }
+        .badge.negative { background-color: #fee8f2; color: var(--negative-color); }
+        .badge.neutral { background-color: #f0f3f4; color: #536471; }
+
+        .explanation {
+            background-color: #f7f9fa;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 15px;
+            color: #333;
+        }
+
+        .formula-box {
+            background-color: #1e2732;
+            color: #e7e9ea;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+
+        .summary-box {
+            background: linear-gradient(to right, #e7f5fd, #ffffff);
+            border-left: 5px solid var(--primary-color);
+            padding: 25px;
+            border-radius: 0 16px 16px 0;
+            margin-top: 40px;
+            box-shadow: 0 2px 10px rgba(29, 155, 240, 0.1);
+        }
+
+        .summary-box h3 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .source-link {
+            font-size: 12px;
+            color: var(--primary-color);
+            text-decoration: none;
+            margin-left: auto;
+            font-weight: normal;
+            background-color: #e7f5fd;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        
+        .source-link:hover {
+            background-color: #d0ebfc;
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .grid-list { grid-template-columns: 1fr; }
+            .section { padding: 20px; }
+            h1 { font-size: 26px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>X (旧Twitter) のアルゴリズム徹底解説</h1>
+        <p>Grokベースの最新AIが、ユーザーの過去の行動履歴を元に<strong>「どのくらいその投稿に反応（エンゲージメント）しそうか」</strong>を予測し、その確率に重み付け（加点・減点）をしてタイムラインの表示順位を決めています。</p>
+    </header>
+
+    <div class="section">
+        <h2 class="positive">❤️ プラス評価（スコアが上がる要因）</h2>
+        <div class="explanation">
+            AIが「このユーザーはこの投稿に対して以下のアクションを起こす確率が高い」と予測した場合、それぞれの確率に重み（ウェイト）が掛けられて総合スコアが加点されます。
+        </div>
+        <ul class="grid-list">
+            <li class="card-item positive-item">
+                <strong>👍 いいね (Favorite) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L146" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">投稿に「いいね」を押す確率。アルゴリズムにおける最も基本的な強力なプラス評価です。</span>
+            </li>
+            <li class="card-item positive-item">
+                <strong>💬 返信 (Reply) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L147" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">投稿に対してリプライ（返信）を送る確率。会話を生む投稿として高く評価されます。</span>
+            </li>
+            <li class="card-item positive-item">
+                <strong>🔁 リポスト (Retweet / Quote) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L148" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">リポストや引用リポストで拡散する確率。情報が広がる可能性として加点されます。</span>
+            </li>
+            <li class="card-item positive-item">
+                <strong>👤 プロフィールクリック <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L151" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">投稿者のプロフィールページへ遷移する確率。投稿者への興味の表れとみなされます。</span>
+            </li>
+            <li class="card-item positive-item">
+                <strong>➕ 投稿者のフォロー <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L165" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">その投稿を見たことがきっかけで、新しく投稿者をフォローする確率。非常に高い価値があります。</span>
+            </li>
+            <li class="card-item positive-item">
+                <strong>👀 滞在時間 (Dwell) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L159" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">スクロールを止めてじっくりと投稿を読んだ時間、またはクリック後の継続的な滞在時間。</span>
+            </li>
+            <li class="card-item positive-item">
+                <strong>🖼️ 画像拡大・動画視聴 <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L149" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">画像をタップして拡大する確率（Photo Expand）や、動画を一定時間視聴する確率（VQV）。</span>
+            </li>
+            <li class="card-item positive-item">
+                <strong>🔗 シェア (DM・リンク等) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L154" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">投稿をDMで送る、またはリンクをコピーして外部へシェアする確率。</span>
+            </li>
+            <li class="card-item positive-item">
+                <strong>🖱️ リンククリック等 <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L150" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">投稿内のリンクや、引用された投稿をクリックする確率（Quoted Click / Click）。</span>
+            </li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2 class="negative">📉 マイナス評価（スコアが下がる要因）</h2>
+        <div class="explanation">
+            逆に、ユーザーが不快に感じたり、興味を持たないと予測される行動は、総合スコアから<strong>大きく減点</strong>されます。マイナス要因のウェイトは総じて重く設定されています。
+        </div>
+        <ul class="grid-list">
+            <li class="card-item negative-item">
+                <strong>🥱 興味なし (Not Interested) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L166" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">ユーザーが「この投稿に興味がない」メニューを押す確率。</span>
+                <div class="badge-group"><span class="badge negative">ペナルティ大</span></div>
+            </li>
+            <li class="card-item negative-item">
+                <strong>🚫 ブロック (Block Author) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L167" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">投稿を見た直後に、その投稿者をブロックする確率。</span>
+                <div class="badge-group"><span class="badge negative">ペナルティ特大</span></div>
+            </li>
+            <li class="card-item negative-item">
+                <strong>🔇 ミュート (Mute Author) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L168" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">投稿を見た直後に、その投稿者をミュートする確率。</span>
+                <div class="badge-group"><span class="badge negative">ペナルティ特大</span></div>
+            </li>
+            <li class="card-item negative-item">
+                <strong>🚨 通報 (Report) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L169" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">スパムや違反行為として通報（レポート）される確率。</span>
+                <div class="badge-group"><span class="badge negative">ペナルティ特大</span></div>
+            </li>
+            <li class="card-item negative-item">
+                <strong>⏭️ 即スクロール (Not Dwelled) <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L170" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">タイムラインに表示されたものの、全く読まれずに一瞬でスクロールして読み飛ばされる確率。</span>
+                <div class="badge-group"><span class="badge negative">魅力なし判定</span></div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2 class="limit">⚠️ 限定度合い・スコア補正（ペナルティ＆ブースト）</h2>
+        <div class="explanation">
+            予測された行動確率の合計スコアに対して、さらにタイムラインの多様性やフォロー外の調整が行われます。
+        </div>
+        <ul class="grid-list">
+            <li class="card-item">
+                <strong>👤 同一投稿者のペナルティ <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L186" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">タイムラインで同じ人の投稿ばかりが続くのを防ぐ機能です。同じ投稿者のツイートがフィードに複数回出現するたびに、乗数（減衰率）が掛けられ、徐々にスコアが低下します。</span>
+                <div class="formula-box">補正後スコア = スコア × (減衰率 ^ 表示順位)</div>
+            </li>
+            <li class="card-item">
+                <strong>🌐 フォロー外の補正 <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L220" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">自分がフォローしていない人（Out-Of-Network）の投稿には、特別なウェイトが掛けられます。通常はスコアが調整されますが、トピックに一致する場合などは柔軟に変動します。</span>
+            </li>
+            <li class="card-item">
+                <strong>🐣 新規ユーザー向けブースト <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L235" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">アカウントを作ったばかりでフォロー数が少ない新規ユーザーに対しては、フォロー外の優れたコンテンツがより多く表示されるように特別なブースト（加点乗数）がかかります。</span>
+            </li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2 class="exclude">🚫 完全に除外されるフィルター (Visibility Filters)</h2>
+        <div class="explanation">
+            スコアの高さに関わらず、以下のいずれかに該当する投稿はタイムラインに表示される前に自動で弾かれます。
+        </div>
+        <ul class="grid-list">
+            <li class="card-item">
+                <strong>👁️ 既読済み・表示済み <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/filters/previously_seen_posts_filter.rs" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">過去にすでに見た投稿や、今回のセッションですでに表示された投稿。</span>
+            </li>
+            <li class="card-item">
+                <strong>🔁 重複・連投 <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/filters/drop_duplicates_filter.rs" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">全く同じ投稿IDの重複や、同じリポスト、同じスレッドの別ブランチの重複表示。</span>
+            </li>
+            <li class="card-item">
+                <strong>⏳ 古すぎる投稿 <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/filters/age_filter.rs" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">一定の時間が経過し、鮮度が落ちた古い投稿。</span>
+            </li>
+            <li class="card-item">
+                <strong>🙈 自分の投稿 <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/filters/self_tweet_filter.rs" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">おすすめタイムライン（For You）には自分自身の投稿は表示されません。</span>
+            </li>
+            <li class="card-item">
+                <strong>🔕 ミュート＆ブロック <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/filters/muted_keyword_filter.rs" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">ブロック中のユーザー、または設定したミュートキーワードが含まれる投稿。</span>
+            </li>
+            <li class="card-item">
+                <strong>🔒 課金限定コンテンツ <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/filters/ineligible_subscription_filter.rs" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">ユーザーがサブスクリプション登録していない有料限定コンテンツ。</span>
+            </li>
+            <li class="card-item">
+                <strong>🚨 規約違反 <a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/filters/vf_filter.rs" target="_blank" class="source-link">🔗ソース</a></strong>
+                <span class="desc">スパム、暴力、グロテスク、削除済みなど、プラットフォームの安全基準を満たさない投稿。</span>
+            </li>
+        </ul>
+    </div>
+
+    <div class="summary-box">
+        <h3>✨ おすすめアルゴリズムの攻略法まとめ</h3>
+        <p>現在のXのアルゴリズムは、小手先のハックではなく<strong>「どれだけユーザーの感情を動かし、行動を引き起こせるか」</strong>をGrok（AI）が純粋に予測しています。</p>
+        <p>1. <strong>プラスのアクションを誘発する：</strong>いいね、リプライ、滞在時間、画像タップなど、読者が思わず手を止めてリアクションしたくなるコンテンツ作りが最重要です。<br>
+        2. <strong>ネガティブアクションを避ける：</strong>過度な煽りやスパム的な投稿は、ブロックや「興味なし」を押された瞬間に致命的な減点を受けます。<br>
+        3. <strong>連投に注意：</strong>短い時間に連続して投稿すると、「多様性のペナルティ」を受けてスコアが下がるため、間隔を空けることが推奨されます。</p>
+    </div>
+</div>
+
+</body>
+</html>
