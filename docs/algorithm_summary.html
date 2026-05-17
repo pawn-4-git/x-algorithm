@@ -224,7 +224,7 @@
                 予測スコア = (確率 × ウェイト) の総和<br>
                 例: 総合スコア = (いいね確率 × 0.5) + (リポスト確率 × 20.0) + (リプライ確率 × 27.0) + ...
             </div>
-            ※ 具体的なウェイト数値はハードコードされておらず、<code>xai_feature_switches</code> を通じて外部から動的に読み込まれます（<a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L42-L66" target="_blank" style="color:var(--primary-color);">🔗ウェイト数値の取得元ソース</a>）。記載している数値は、過去の公開時に判明した目安となる設定値です。
+            ※ 具体的なウェイト数値はハードコードされておらず、<code>xai_feature_switches</code> を通じて外部から動的に読み込まれます（<a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/server.rs#L138-L175" target="_blank" style="color:var(--primary-color);">🔗設定読み込み・評価元ソース</a>、<a href="https://github.com/xai-org/x-algorithm/blob/main/home-mixer/scorers/ranking_scorer.rs#L42-L66" target="_blank" style="color:var(--primary-color);">🔗ウェイト適用部分のソース</a>）。記載している数値は、過去の公開時に判明した目安となる設定値です。
         </div>
         <ul class="grid-list">
             <li class="card-item positive-item">
